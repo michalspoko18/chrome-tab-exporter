@@ -1,0 +1,148 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.container {
+  width: 500px;
+  max-height: 600px;
+  padding: 20px;
+}
+
+h1 {
+  font-size: 24px;
+  margin-bottom: 15px;
+  text-align: center;
+  color: #1a73e8;
+}
+
+h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.search-container {
+  margin-bottom: 15px;
+}
+
+#searchInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.tab-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.tab-controls button {
+  padding: 5px 10px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.tab-controls button:hover {
+  background-color: #e8e8e8;
+}
+
+.tabs-list {
+  max-height: 350px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  background-color: white;
+}
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.tab-item:last-child {
+  border-bottom: none;
+}
+
+.tab-checkbox {
+  margin-right: 10px;
+}
+
+.tab-info {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.tab-title {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.tab-url {
+  color: #666;
+  font-size: 12px;
+}
+
+.favicon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.action-button {
+  flex: 1;
+  padding: 10px;
+  background-color: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.action-button:hover {
+  background-color: #1557b0;
+}
+
+.status-message {
+  text-align: center;
+  padding: 8px;
+  font-size: 14px;
+  border-radius: 4px;
+  min-height: 35px;
+}
+
+.success {
+  background-color: #e6f4ea;
+  color: #137333;
+}
+
+.error {
+  background-color: #fce8e6;
+  color: #c5221f;
+}

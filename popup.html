@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chrome Tab Exporter</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Chrome Tab Exporter</h1>
+    
+    <div class="tabs-section">
+      <h2>Current Tabs</h2>
+      <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search tabs...">
+      </div>
+      <div class="tab-controls">
+        <button id="selectAll">Select All</button>
+        <button id="deselectAll">Deselect All</button>
+      </div>
+      <div id="tabsList" class="tabs-list"></div>
+    </div>
+    
+    <div class="actions">
+      <button id="exportTabs" class="action-button">Export Selected Tabs</button>
+      <button id="importTabs" class="action-button">Import Tabs</button>
+    </div>
+    
+    <input type="file" id="importFile" accept=".json" style="display: none;">
+    
+    <div class="status-message" id="statusMessage"></div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
