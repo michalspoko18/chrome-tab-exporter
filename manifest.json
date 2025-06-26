@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Chrome Tab Exporter",
+  "name": "Tab Exporter",
   "version": "1.0",
   "description": "Export and import Chrome tabs across devices",
-  "permissions": ["tabs", "storage"],
+  "permissions": ["tabs", "storage", "clipboardRead", "clipboardWrite"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

@@ -3,9 +3,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const searchInput = document.getElementById('searchInput');
   const selectAllBtn = document.getElementById('selectAll');
   const deselectAllBtn = document.getElementById('deselectAll');
-  const exportTabsBtn = document.getElementById('exportTabs');
-  const importTabsBtn = document.getElementById('importTabs');
-  const importFile = document.getElementById('importFile');
+  const copyTabsBtn = document.getElementById('copyTabs');
+  const pasteTabsBtn = document.getElementById('pasteTabs');
+  const clipboardArea = document.getElementById('clipboardArea');
   const statusMessage = document.getElementById('statusMessage');
 
   let allTabs = [];
@@ -13,8 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Load all tabs
   function loadTabs() {
     chrome.tabs.query({}, function(tabs) {
-      allTabs = tabs;
-      displayTabs(tabs);
+      // Filter out tabs that don't start with http or https
+      allTabs = tabs.filter(tab => tab.url.startsWith('http'));
+      displayTabs(allTabs);
     });
   }
 
@@ -85,83 +86,82 @@ document.addEventListener('DOMContentLoaded', function() {
     return Array.from(checkboxes).map(checkbox => parseInt(checkbox.dataset.tabId));
   }
 
-  // Export tabs as encoded text (URLs only)
-  function exportTabs() {
+  // Copy selected tab URLs to clipboard
+  function copyTabsToClipboard() {
     const selectedTabIds = getSelectedTabs();
     
     if (selectedTabIds.length === 0) {
-      showStatus('Please select at least one tab to export', 'error');
+      showStatus('Please select at least one tab to copy', 'error');
       return;
     }
     
-    // Get only the URLs from selected tabs
+    // Get only the URLs from selected tabs (only http/https URLs)
     const urlsToExport = allTabs
       .filter(tab => selectedTabIds.includes(tab.id))
+      .filter(tab => tab.url.startsWith('http'))
       .map(tab => tab.url);
     
-    // Encode URLs as a simple text format (one URL per line)
-    const encodedUrls = urlsToExport.join('\n');
+    // Join URLs as a simple text format (one URL per line)
+    const textToCopy = urlsToExport.join('\n');
     
-    // Create a blob with the encoded text
-    const blob = new Blob([encodedUrls], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    
-    const date = new Date();
-    const dateString = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-    const fileName = `chrome-tabs-${dateString}.txt`;
-    
-    const downloadLink = document.createElement('a');
-    downloadLink.href = url;
-    downloadLink.download = fileName;
-    downloadLink.click();
-    
-    URL.revokeObjectURL(url);
-    showStatus(`${urlsToExport.length} tabs exported successfully!`, 'success');
+    // Copy to clipboard using Clipboard API
+    navigator.clipboard.writeText(textToCopy)
+      .then(() => {
+        showStatus(`${urlsToExport.length} tab URLs copied to clipboard!`, 'success');
+      })
+      .catch(err => {
+        console.error('Failed to copy: ', err);
+        
+        // Fallback method
+        clipboardArea.value = textToCopy;
+        clipboardArea.style.position = 'fixed';
+        clipboardArea.focus();
+        clipboardArea.select();
+        
+        const successful = document.execCommand('copy');
+        clipboardArea.style.position = 'absolute';
+        clipboardArea.style.left = '-9999px';
+        
+        if (successful) {
+          showStatus(`${urlsToExport.length} tab URLs copied to clipboard!`, 'success');
+        } else {
+          showStatus('Failed to copy URLs to clipboard', 'error');
+        }
+      });
   }
 
-  // Import tabs from a text file
-  function importTabsFromFile(file) {
-    const reader = new FileReader();
-    
-    reader.onload = function(event) {
-      try {
-        // Split the content by newlines to get individual URLs
-        const fileContent = event.target.result;
-        let urls = [];
-        
-        // Try to parse as JSON first (for backward compatibility)
-        try {
-          const jsonData = JSON.parse(fileContent);
-          if (jsonData.tabs && Array.isArray(jsonData.tabs)) {
-            urls = jsonData.tabs.map(tab => tab.url).filter(url => url);
-          }
-        } catch {
-          // Not JSON, treat as plain text with one URL per line
-          urls = fileContent.split('\n')
-            .map(url => url.trim())
-            .filter(url => url && url.startsWith('http'));
-        }
-        
-        if (urls.length === 0) {
-          throw new Error('No valid URLs found in the file');
-        }
-        
-        // Open each URL in a new tab
-        urls.forEach(url => {
-          chrome.tabs.create({ url: url, active: false });
+  // Paste and open tabs from clipboard
+  async function pasteTabsFromClipboard() {
+    try {
+      // Try to read from clipboard
+      const clipboardText = await navigator.clipboard.readText()
+        .catch(() => {
+          // If Clipboard API fails, show error
+          throw new Error('Unable to access clipboard. Please check browser permissions.');
         });
-        
-        showStatus(`${urls.length} tabs imported successfully!`, 'success');
-      } catch (error) {
-        showStatus(`Error importing tabs: ${error.message}`, 'error');
+      
+      if (!clipboardText || clipboardText.trim() === '') {
+        throw new Error('Clipboard is empty');
       }
-    };
-    
-    reader.onerror = function() {
-      showStatus('Error reading file', 'error');
-    };
-    
-    reader.readAsText(file);
+      
+      // Parse URLs from clipboard text
+      const urls = clipboardText.split('\n')
+        .map(url => url.trim())
+        .filter(url => url && url.startsWith('http'));
+      
+      if (urls.length === 0) {
+        throw new Error('No valid URLs found in clipboard');
+      }
+      
+      // Open each URL in a new tab
+      urls.forEach(url => {
+        chrome.tabs.create({ url: url, active: false });
+      });
+      
+      showStatus(`${urls.length} tabs imported successfully!`, 'success');
+    } catch (error) {
+      showStatus(`Error: ${error.message}`, 'error');
+    }
   }
 
   // Show status message
@@ -188,18 +188,9 @@ document.addEventListener('DOMContentLoaded', function() {
     checkboxes.forEach(checkbox => checkbox.checked = false);
   });
   
-  exportTabsBtn.addEventListener('click', exportTabs);
+  copyTabsBtn.addEventListener('click', copyTabsToClipboard);
   
-  importTabsBtn.addEventListener('click', () => {
-    importFile.click();
-  });
-  
-  importFile.addEventListener('change', (event) => {
-    if (event.target.files.length > 0) {
-      importTabsFromFile(event.target.files[0]);
-      event.target.value = ''; // Reset file input
-    }
-  });
+  pasteTabsBtn.addEventListener('click', pasteTabsFromClipboard);
 
   // Initialize
   loadTabs();

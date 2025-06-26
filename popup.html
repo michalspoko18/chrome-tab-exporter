@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>Chrome Tab Exporter</h1>
+    <h1>Tab Exporter</h1>
     
     <div class="tabs-section">
       <h2>Current Tabs</h2>
@@ -23,11 +23,11 @@
     </div>
     
     <div class="actions">
-      <button id="exportTabs" class="action-button">Export Selected Tabs</button>
-      <button id="importTabs" class="action-button">Import Tabs</button>
+      <button id="copyTabs" class="action-button">Copy URLs to Clipboard</button>
+      <button id="pasteTabs" class="action-button">Paste URLs from Clipboard</button>
     </div>
     
-    <input type="file" id="importFile" accept=".txt,.json" style="display: none;">
+    <textarea id="clipboardArea" style="position: absolute; left: -9999px;"></textarea>
     
     <div class="status-message" id="statusMessage"></div>
   </div>
