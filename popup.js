@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return Array.from(checkboxes).map(checkbox => parseInt(checkbox.dataset.tabId));
   }
 
-  // Export tabs to a JSON file
+  // Export tabs as encoded text (URLs only)
   function exportTabs() {
     const selectedTabIds = getSelectedTabs();
     
@@ -94,25 +94,21 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     
-    const tabsToExport = allTabs.filter(tab => selectedTabIds.includes(tab.id))
-      .map(tab => ({
-        title: tab.title,
-        url: tab.url,
-        favicon: tab.favIconUrl || ''
-      }));
+    // Get only the URLs from selected tabs
+    const urlsToExport = allTabs
+      .filter(tab => selectedTabIds.includes(tab.id))
+      .map(tab => tab.url);
     
-    const exportData = {
-      tabs: tabsToExport,
-      exportDate: new Date().toISOString(),
-      version: '1.0'
-    };
+    // Encode URLs as a simple text format (one URL per line)
+    const encodedUrls = urlsToExport.join('\n');
     
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    // Create a blob with the encoded text
+    const blob = new Blob([encodedUrls], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     
     const date = new Date();
     const dateString = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-    const fileName = `chrome-tabs-${dateString}.json`;
+    const fileName = `chrome-tabs-${dateString}.txt`;
     
     const downloadLink = document.createElement('a');
     downloadLink.href = url;
@@ -120,28 +116,42 @@ document.addEventListener('DOMContentLoaded', function() {
     downloadLink.click();
     
     URL.revokeObjectURL(url);
-    showStatus(`${tabsToExport.length} tabs exported successfully!`, 'success');
+    showStatus(`${urlsToExport.length} tabs exported successfully!`, 'success');
   }
 
-  // Import tabs from a JSON file
+  // Import tabs from a text file
   function importTabsFromFile(file) {
     const reader = new FileReader();
     
     reader.onload = function(event) {
       try {
-        const importData = JSON.parse(event.target.result);
+        // Split the content by newlines to get individual URLs
+        const fileContent = event.target.result;
+        let urls = [];
         
-        if (!importData.tabs || !Array.isArray(importData.tabs)) {
-          throw new Error('Invalid import file format');
+        // Try to parse as JSON first (for backward compatibility)
+        try {
+          const jsonData = JSON.parse(fileContent);
+          if (jsonData.tabs && Array.isArray(jsonData.tabs)) {
+            urls = jsonData.tabs.map(tab => tab.url).filter(url => url);
+          }
+        } catch {
+          // Not JSON, treat as plain text with one URL per line
+          urls = fileContent.split('\n')
+            .map(url => url.trim())
+            .filter(url => url && url.startsWith('http'));
         }
         
-        importData.tabs.forEach(tab => {
-          if (tab.url) {
-            chrome.tabs.create({ url: tab.url, active: false });
-          }
+        if (urls.length === 0) {
+          throw new Error('No valid URLs found in the file');
+        }
+        
+        // Open each URL in a new tab
+        urls.forEach(url => {
+          chrome.tabs.create({ url: url, active: false });
         });
         
-        showStatus(`${importData.tabs.length} tabs imported successfully!`, 'success');
+        showStatus(`${urls.length} tabs imported successfully!`, 'success');
       } catch (error) {
         showStatus(`Error importing tabs: ${error.message}`, 'error');
       }
